@@ -1,0 +1,9 @@
+name: validate-tag-sha
+description: |
+  validate-tag-sha takes a git repository, tag name, and a commit SHA and
+  checks whether the given tag resolves to that commit. This example
+  Pipeline demonstrates the following:
+    - How to use the git-clone catalog Task
+    - How to use the git-clone Task's "commit" Task Result from another Task.
+    - How to discard the contents of the git repo when it isn't needed by
+      passing an `emptyDir` Volume as its "output" workspace.

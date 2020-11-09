@@ -1,0 +1,16 @@
+- name: apply ytt templates
+  task: github.com/carvel/tcl/tasks/ytt
+  params:
+    files:
+      - "./config"
+      - "./overlays"
+      - "./values"
+    output: "./rendered/deploy.yaml"
+
+- name: deploy app
+  task: github.com/carvel/tcl/tasks/kapp
+  params:
+    name: "{{ app-name }}"
+    namespace: "{{ namespace }}"
+    files:
+      - "./rendered/deploy.yaml"

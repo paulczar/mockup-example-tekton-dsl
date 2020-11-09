@@ -1,0 +1,13 @@
+name: git-clone-ytt-and-deploy
+
+# workspaces are effectively the k8s volumes that tasks can write/read to/from
+# to share data inputs/outputs with eachother
+workspaces:
+  - name: output
+    spec:
+      pvc: ...
+
+# pipelines are which pipelines to run (in order) based on contents of ./pipelines folder.
+pipelines:
+  - validate-tag-sha
+  - deploy-app

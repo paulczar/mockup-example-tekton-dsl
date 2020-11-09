@@ -1,0 +1,76 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: git-clone-ytt-and-deploy
+spec:
+  params:
+  - name: repo-url
+    type: string
+    description: The git repository URL to clone from.
+  - name: tag-name
+    type: string
+    description: The git tag to clone.
+  - name: expected-sha
+    type: string
+    description: The expected SHA to be received for the supplied revision.
+  workspaces:
+  - name: output
+  tasks:
+  - name: fetch-repository
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: output
+      workspace: output
+    params:
+    - name: url
+      value: $(params.repo-url)
+    - name: revision
+      value: $(params.tag-name)
+  - name: validate-revision-sha
+    params:
+    - name: revision-name
+      value: $(params.tag-name)
+    - name: expected-sha
+      value: $(params.expected-sha)
+    - name: received-sha
+      value: $(tasks.fetch-repository.results.commit)
+    taskSpec:
+      params:
+      - name: revision-name
+      - name: expected-sha
+      - name: received-sha
+      steps:
+      - image: zshusers/zsh:4.3.15
+        script: |
+          #!/usr/bin/env zsh
+          if [ "$(params.expected-sha)" != "$(params.received-sha)" ]; then
+            echo "Expected revision $(params.revision-name) to have SHA $(params.expected-sha)."
+            exit 1
+          else
+            echo "Revision $(params.revision-name) has expected SHA $(params.expected-sha)."
+          fi
+  - name: apply ytt templates
+    ...
+    ...
+  - name: deploy app
+    ...
+    ...
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: running-git-clone-ytt-and-deploy-
+spec:
+  pipelineRef:
+    name: git-clone-ytt-and-deploy
+  workspaces:
+  - name: output
+    pvc: ...
+  params:
+  - name: repo-url
+    value: https://github.com/tektoncd/pipeline.git
+  - name: tag-name
+    value: v0.12.1
+  - name: expected-sha
+    value: a54dd3984affab47f3018852e61a1a6f9946ecfa

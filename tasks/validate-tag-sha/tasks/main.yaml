@@ -1,0 +1,35 @@
+- name: fetch-repository
+  task: github.com/tekton/catalog/tasks/git-clone
+  params:
+    url:      "{{ repo-url }}"
+    revision: "{{ tag-name }}"
+
+- name: validate-revision-sha
+  task: github.com/tekton/catalog/tasks/validate-revision-sha
+  params:
+    revision-name: "{{ tag-name }}"
+    expected-sha:  "{{ expected-sha }}"
+    received-sha:  "{{ tasks.fetch-repository.results.commit }}"
+
+- name: validate-revision-sha
+  task: ./tasks/validate-revision-sha
+  params:
+    revision: "{{ tag-name }}"
+    expected-sha:  "{{ expected-sha }}"
+    received-sha:  "{{ tasks.fetch-repository.results.commit }}"
+
+- name: received-sha
+  params:
+    revision-name: "{{ tag-name }}"
+    expected-sha: "{{ expected-sha }}"
+    received-sha: "{{ tasks.fetch-repository.results.commit }}"
+  steps:
+    - image: zshusers/zsh:4.3.15
+      script: |
+        #!/usr/bin/env zsh
+        if [ "$(params.expected-sha)" != "$(params.received-sha)" ]; then
+          echo "Expected revision $(params.revision-name) to have SHA $(params.expected-sha)."
+          exit 1
+        else
+          echo "Revision $(params.revision-name) has expected SHA $(params.expected-sha)."
+        fi
